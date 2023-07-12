@@ -1,0 +1,9 @@
+name: mlfold
+channels:
+  - conda-forge
+  - pytorch
+dependencies:
+  - pytorch::pytorch
+  - pytorch::torchvision
+  - pytorch::torchaudio
+  - conda-forge::cudatoolkit=11.3

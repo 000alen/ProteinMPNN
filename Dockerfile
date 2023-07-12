@@ -5,28 +5,34 @@ RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/
 RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub
 
 RUN apt-get update && apt-get install -y wget libxml2 cuda-minimal-build-11-3 libcusparse-dev-11-3 libcublas-dev-11-3 libcusolver-dev-11-3 git
+
+# ? NOTE: This is to install mamba, which is a faster version of conda. Yet we still
+# ? need to install conda to install mamba. This is a bit of a hack, but it works.
 RUN wget -P /tmp \
     "https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh" \
     && bash /tmp/Miniconda3-latest-Linux-x86_64.sh -b -p /opt/conda \
     && rm /tmp/Miniconda3-latest-Linux-x86_64.sh
 ENV PATH /opt/conda/bin:$PATH
 
+COPY environment.yml /opt/ProteinMPNN/environment.yml
+
 RUN conda install -c conda-forge mamba
+RUN mamba env create --file /opt/ProteinMPNN/environment.yml 
 
-RUN mamba install pytorch torchvision torchaudio cudatoolkit=11.3 -c pytorch
+COPY ca_model_weights /opt/ProteinMPNN/ca_model_weights
+COPY colab_notebooks /opt/ProteinMPNN/colab_notebooks
 
-# COPY openfold /opt/openfold/openfold
-# COPY scripts /opt/openfold/scripts
-# COPY run_pretrained_openfold.py /opt/openfold/run_pretrained_openfold.py
-# COPY train_openfold.py /opt/openfold/train_openfold.py
-# COPY setup.py /opt/openfold/setup.py
+COPY examples /opt/ProteinMPNN/examples
+RUN chmod +x /opt/ProteinMPNN/examples/*
 
-# RUN wget -q -P /opt/openfold/openfold/resources \
-#     https://git.scicore.unibas.ch/schwede/openstructure/-/raw/7102c63615b64735c4941278d92b554ec94415f8/modules/mol/alg/src/stereo_chemical_props.txt
+COPY helper_scripts /opt/ProteinMPNN/helper_scripts
+COPY inputs /opt/ProteinMPNN/inputs
+COPY outputs /opt/ProteinMPNN/outputs
+COPY soluble_model_weights /opt/ProteinMPNN/soluble_model_weights
+COPY training /opt/ProteinMPNN/training
+COPY vanilla_model_weights /opt/ProteinMPNN/vanilla_model_weights
 
-# WORKDIR /opt/openfold
-# RUN python3 setup.py install
+COPY protein_mpnn_run.py /opt/ProteinMPNN/
+COPY protein_mpnn_utils.py /opt/ProteinMPNN/
 
-# COPY preprocessing_distributions.py /opt/openfold/
-# COPY predict_with_crosslinks.py /opt/openfold/
-# COPY contacts_to_distograms.py /opt/openfold/
+# WORKDIR /opt/ProteinMPNN
